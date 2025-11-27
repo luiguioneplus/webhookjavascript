@@ -41,7 +41,7 @@ exports.handler = async (event, context) => {
         statusCode: 200,
         body: JSON.stringify({ 
             message: "Webhook de Netlify procesado exitosamente.",
-            idRecibido: datosRecibidos.id || "N/A" // Ejemplo de respuesta
+            idRecibido: datosRecibidos.status || "N/A" // Ejemplo de respuesta
         })
     };
 };
