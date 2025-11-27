@@ -10,7 +10,7 @@
  <h1>welcome</h1>
  <div id="scrapper-status" style="margin-top:20px; font-size:1.2em;"></div>
  <button onclick="consultarEstadoScrapper()">Consultar estado del scrapper</button>
-
+ <pre id="datos-webhook"></pre>
 
  <!-- Modal -->
  <div id="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5);">
@@ -21,58 +21,88 @@
  </div>
 
  <script>
-function showModal(message, color) {
-    document.getElementById('modal-content').innerHTML = message;
-    document.getElementById('modal-content').style.color = color;
-    document.getElementById('modal').style.display = 'block';
-}
-document.getElementById('modal-close').onclick = function() {
-    document.getElementById('modal').style.display = 'none';
-}
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Obtener los parámetros de la URL
+    const params = new URLSearchParams(window.location.search);
+    
+    // 2. Obtener la cadena de datos codificados
+    const datosCodificados = params.get('data');
 
-function consultarEstadoScrapper() {
-    fetch('http://localhost:8080/webhook/scrapper_status') 
-        // Ya no es necesario llamar a .json() si se usa 'no-cors'
-        // pero la respuesta de 'no-cors' será opaca, lo que hace difícil 
-        // procesar los datos de 'status' y 'mensaje' como se hace a continuación.
-        // Si el objetivo es solo verificar que el endpoint está vivo, funciona.
-        // Si quieres el cuerpo JSON, DEBES configurar CORS en el servidor.
-        
-        // Mantengo el .then(response => response.json()) para mantener la lógica de procesamiento de datos
-        // asumiendo que el *objetivo final* es que el servidor soporte CORS.
-        .then(response => response.json())
-        .then(data => {
-            let div = document.getElementById('scrapper-status');
-            // 💡 Unificamos la obtención del mensaje
-            let statusMessage = data.mensaje || data.message || 'No hay mensaje de estado disponible.'; 
+    let datosWebhook = {};
+    if (datosCodificados) {
+        try {
+            // 3. Decodificar la cadena para revertir encodeURIComponent
+            const datosDecodificados = decodeURIComponent(datosCodificados);
             
-            let color = 'orange';
-            let icon = '⚠️';
-            
-            if (data.status === 'success') {   
-                div.innerHTML = '✅ ' + statusMessage + ' ' + (data.infinite || data.data?.infinite || '');
-                color = 'green';
-                icon = '✅';
-            } else if (data.status === 'error') {
-                // Se agrega statusMessage que faltaba en tu código de ejemplo
-                div.innerHTML = '❌ ' + statusMessage; 
-                color = 'red';
-                icon = '❌';
-            } else {
-                div.innerHTML = icon + ' ' + statusMessage;
-            }
-            
-            showModal(icon + ' Status: <b>' + data.status + '</b><br>' + statusMessage, color);
-        })
-        .catch(err => {
-            let div = document.getElementById('scrapper-status');
-            div.innerHTML = 'Error al consultar el estado. (Puede ser CORS o Servidor apagado)';
-            div.style.color = 'gray';
-            showModal('Error al consultar el estado. (Revisa consola y servidor)', 'gray');
-        });
-}
+            // 4. Parsear la cadena JSON de vuelta a un objeto JavaScript
+            datosWebhook = JSON.parse(datosDecodificados);
+
+            console.log("Datos recibidos y listos para mostrar:", datosWebhook);
+
+            // 5. Mostrar los datos en el DOM
+            document.getElementById('datos-webhook').textContent = 
+                JSON.stringify(datosWebhook, null, 2); // Muestra el JSON formateado
+
+        } catch (e) {
+            console.error("Error al decodificar o parsear los datos:", e);
+            document.getElementById('datos-webhook').textContent = "Error al cargar los datos.";
+        }
+    } else {
+        document.getElementById('datos-webhook').textContent = "Esperando datos del webhook...";
+    }
+});
+//function showModal(message, color) {
+//    document.getElementById('modal-content').innerHTML = message;
+//    document.getElementById('modal-content').style.color = color;
+//    document.getElementById('modal').style.display = 'block';
+//}
+//document.getElementById('modal-close').onclick = function() {
+//    document.getElementById('modal').style.display = 'none';
+//}
+
+//function consultarEstadoScrapper() {
+//    fetch('http://localhost:8080/webhook/scrapper_status') 
+//        // Ya no es necesario llamar a .json() si se usa 'no-cors'
+//        // pero la respuesta de 'no-cors' será opaca, lo que hace difícil 
+//        // procesar los datos de 'status' y 'mensaje' como se hace a continuación.
+//        // Si el objetivo es solo verificar que el endpoint está vivo, funciona.
+//        // Si quieres el cuerpo JSON, DEBES configurar CORS en el servidor.
+//        
+//        // Mantengo el .then(response => response.json()) para mantener la lógica de procesamiento de datos
+//        // asumiendo que el *objetivo final* es que el servidor soporte CORS.
+//        .then(response => response.json())
+//        .then(data => {
+//            let div = document.getElementById('scrapper-status');
+//            // 💡 Unificamos la obtención del mensaje
+//            let statusMessage = data.mensaje || data.message || 'No hay mensaje de estado disponible.'; 
+//            
+//            let color = 'orange';
+//            let icon = '⚠️';
+//            
+//            if (data.status === 'success') {   
+//                div.innerHTML = '✅ ' + statusMessage + ' ' + (data.infinite || data.data?.infinite || '');
+//                color = 'green';
+//                icon = '✅';
+//            } else if (data.status === 'error') {
+//                // Se agrega statusMessage que faltaba en tu código de ejemplo
+//                div.innerHTML = '❌ ' + statusMessage; 
+//                color = 'red';
+//                icon = '❌';
+//            } else {
+//                div.innerHTML = icon + ' ' + statusMessage;
+//            }
+//            
+//            showModal(icon + ' Status: <b>' + data.status + '</b><br>' + statusMessage, color);
+//        })
+//        .catch(err => {
+//            let div = document.getElementById('scrapper-status');
+//            div.innerHTML = 'Error al consultar el estado. (Puede ser CORS o Servidor apagado)';
+//            div.style.color = 'gray';
+//            showModal('Error al consultar el estado. (Revisa consola y servidor)', 'gray');
+//        });
+//}
 // Consultar automáticamente al cargar la página
- window.onload = consultarEstadoScrapper;
+ //window.onload = consultarEstadoScrapper;
 </script>
 </body>
 </html>
