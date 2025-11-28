@@ -1,49 +1,26 @@
 <?php
-// Habilitar CORS si es necesario (para peticiones desde otros dominios)
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-$json = file_get_contents('php://input');
-$datos = json_decode($json, true);
-echo $datos;
-// Manejar preflight request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
+    // 1. Permitir acceso (CORS) - Importante si pruebas desde distintos puertos/dominios
+    header("Access-Control-Allow-Origin: *");
+    header("Content-Type: application/json; charset=UTF-8");
+    header("Access-Control-Allow-Methods: POST");
+    header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// Método 1: Recibir datos JSON
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && 
-    isset($_SERVER['CONTENT_TYPE']) && 
-    strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
-    
-    $json = file_get_contents('php://input');
-    $datos = json_decode($json, true);
-    
-    $estado = $datos['status'] ?? '';
-    $mensaje = $datos['mensaje'] ?? '';
-    $metodo = $datos['metodo'] ?? 0;
-    
-    // Procesar datos...
-    
-    echo datos ;
-    print_r($datos);
-    echo("hola");
- # Inicia el servidor PHP y verás todo en tiempo real
+    // 2. Obtener los datos crudos (RAW)
+    $jsonRecibido = file_get_contents('php://input');
 
+    // 3. Decodificar el JSON a un Array asociativo de PHP
+    $data = json_decode($jsonRecibido, true);
 
-# Luego abre tu HTML con JavaScript en el navegador
-# Los datos aparecerán en la terminal automáticamente
-
-
-
-
-
-    // Responder con JSON
-    header('Content-Type: application/json');
-    echo json_encode([
-        'success' => true,
-        'mensaje' => 'Datos recibidos correctamente',
-        'datos_recibidos' => $datos
-    ]);
-    exit;
-}
+    // --- ZONA DE DEBUGGING ---
+    // Como es un webhook, no verás un "echo" en pantalla. 
+    // La mejor forma de verificar si llegó es guardarlo en un archivo de texto.
+    if ($data) {
+        $log = date("Y-m-d H:i:s") . " - Datos recibidos: " . print_r($data, true) . PHP_EOL;
+        file_put_contents('webhook_log.txt', $log, FILE_APPEND);
+        
+        // Responder al JS que todo salió bien
+        echo json_encode(["status" => "exito", "mensaje" => "Datos procesados"]);
+    } else {
+        echo json_encode(["status" => "error", "mensaje" => "No llegaron datos válidos"]);
+    }
+?>
