@@ -3,6 +3,7 @@
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
+$json = file_get_contents('php://input');
 $datos = json_decode($json, true);
 echo $datos;
 // Manejar preflight request
